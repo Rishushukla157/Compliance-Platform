@@ -1,0 +1,7 @@
+**/node_modules/
+**/.next
+.env
+run.ps1
+todo.txt
+.DS_Store
+Compliance-Platform

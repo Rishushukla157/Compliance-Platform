@@ -1,0 +1,84 @@
+version: '3.8'
+
+services:
+  # MongoDB Database
+  mongodb:
+    image: mongo:7.0
+    container_name: compliance-mongodb
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: admin
+      MONGO_INITDB_ROOT_PASSWORD: password123
+      MONGO_INITDB_DATABASE: compliance_db
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongodb_data:/data/db
+    networks:
+      - compliance-network
+
+  # Backend API
+  backend:
+    build: 
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: compliance-backend
+    environment:
+      NODE_ENV: development
+      PORT: 3001
+      MONGO_URI: mongodb://admin:password123@mongodb:27017/compliance_db?authSource=admin
+      JWT_SECRET: QA_API_2025_Super_Secure_Access_Token_Secret_Key_Gagan_Quiz_System_V1_#$%^&*()
+      JWT_REFRESH_SECRET: QA_API_2025_Ultra_Secure_Refresh_Token_Secret_Key_Gagan_Quiz_System_V1_!@#$%^&*()_+
+      CORS_ORIGIN: http://localhost
+    ports:
+      - "3001:3001"
+    depends_on:
+      - mongodb
+    volumes:
+      - ./backend:/app
+      - backend_node_modules:/app/node_modules
+    networks:
+      - compliance-network
+
+  # Frontend
+  frontend:
+    build: 
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: compliance-frontend
+    environment:
+      NODE_ENV: development
+      NEXT_PUBLIC_API_URL: http://localhost/api
+    ports:
+      - "3000:3000"
+    depends_on:
+      - backend
+    volumes:
+      - ./frontend:/app
+      - frontend_node_modules:/app/node_modules
+      - /app/.next
+    networks:
+      - compliance-network
+
+  # Nginx Reverse Proxy
+  nginx:
+    image: nginx:alpine
+    container_name: compliance-nginx
+    ports:
+      - "80:80"
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./nginx/conf.d:/etc/nginx/conf.d:ro
+    depends_on:
+      - frontend
+      - backend
+    networks:
+      - compliance-network
+
+volumes:
+  mongodb_data:
+  backend_node_modules:
+  frontend_node_modules:
+
+networks:
+  compliance-network:
+    driver: bridge

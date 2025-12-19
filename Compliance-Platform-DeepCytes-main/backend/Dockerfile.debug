@@ -1,0 +1,22 @@
+# Minimal test Dockerfile
+FROM node:18-alpine
+
+WORKDIR /app
+
+# Copy everything first to test
+COPY . .
+
+# List files to debug
+RUN ls -la
+
+# Install dependencies
+RUN npm install
+
+# Install nodemon
+RUN npm install -g nodemon
+
+ENV NODE_ENV=development
+ENV PORT=3001
+EXPOSE 3001
+
+CMD ["nodemon", "app.js"]
